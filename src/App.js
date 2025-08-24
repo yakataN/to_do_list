@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+// APIサーバーとの通信に使う
+const API_URL = "http://localhost:4000/api/tasks";
 
 // ToDoリストアプリのメインコンポーネント
 function App() {
@@ -7,25 +9,48 @@ function App() {
   // 入力欄の状態
   const [input, setInput] = useState("");
 
+  // 初回取得
+  React.useEffect(() => {
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setTasks(data));
+  }, []);
+
   // タスク追加
-  const addTask = () => {
+  const addTask = async () => {
     if (input.trim() === "") return;
-    setTasks([...tasks, { text: input, done: false }]);
+    const newTask = { text: input, done: false };
+    await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newTask)
+    });
+    // 再取得
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setTasks(data));
     setInput("");
   };
 
   // タスク削除
-  const deleteTask = (index) => {
-    setTasks(tasks.filter((_, i) => i !== index));
+  const deleteTask = async (index) => {
+    await fetch(`${API_URL}/${index}`, { method: "DELETE" });
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setTasks(data));
   };
 
   // 完了状態の切り替え
-  const toggleDone = (index) => {
-    setTasks(
-      tasks.map((task, i) =>
-        i === index ? { ...task, done: !task.done } : task
-      )
-    );
+  const toggleDone = async (index) => {
+    const updated = { ...tasks[index], done: !tasks[index].done };
+    await fetch(`${API_URL}/${index}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated)
+    });
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setTasks(data));
   };
 
   return (
