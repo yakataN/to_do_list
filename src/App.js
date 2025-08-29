@@ -73,6 +73,12 @@ function App() {
     return <Login onLogin={() => setLoggedIn(true)} />;
   }
 
+  // ログアウト処理
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setLoggedIn(false);
+  };
+
   return (
     <div style={{
       maxWidth: 480,
@@ -83,13 +89,29 @@ function App() {
       boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
       fontFamily: "'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif"
     }}>
-      <h2 style={{
-        textAlign: "center",
-        fontWeight: 700,
-        fontSize: 28,
-        marginBottom: 24,
-        color: "#1976d2"
-      }}>ToDoリスト</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <h2 style={{
+          textAlign: "left",
+          fontWeight: 700,
+          fontSize: 28,
+          color: "#1976d2",
+          margin: 0
+        }}>ToDoリスト</h2>
+        <button
+          onClick={handleLogout}
+          style={{
+            background: "#bdbdbd",
+            color: "#fff",
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 16px",
+            fontWeight: 600,
+            fontSize: 15,
+            cursor: "pointer",
+            marginLeft: 12
+          }}
+        >ログアウト</button>
+      </div>
       <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
         <input
           type="text"

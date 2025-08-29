@@ -43,6 +43,13 @@ afterAll((done) => {
   });
 
   describe('Auth API', () => {
+    test('POST /api/register ユーザー名・パスワード未指定はエラー', async () => {
+      const res = await request(server)
+        .post('/api/register')
+        .send({ username: '', password: '' });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBeDefined();
+    });
     test('POST /api/register 新規登録成功', async () => {
       const res = await request(server)
         .post('/api/register')
@@ -91,6 +98,44 @@ beforeEach(() => {
 });
 
 describe('ToDo API', () => {
+  test('GET /api/tasks 認証なしはエラー', async () => {
+    const res = await request(server)
+      .get('/api/tasks');
+    expect(res.statusCode).toBe(401);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('POST /api/tasks 認証なしはエラー', async () => {
+    const res = await request(server)
+      .post('/api/tasks')
+      .send({ text: 'A', done: false });
+    expect(res.statusCode).toBe(401);
+    expect(res.body.error).toBeDefined();
+  });
+
+  test('PUT /api/tasks/:index 不正なインデックスはエラー', async () => {
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'A', done: false });
+    const updated = { text: 'A', done: true };
+    const res = await request(server)
+      .put('/api/tasks/99')
+      .set('Authorization', `Bearer ${token1}`)
+      .send(updated);
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('DELETE /api/tasks/:index 不正なインデックスはエラー', async () => {
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'A', done: false });
+    const res = await request(server)
+      .delete('/api/tasks/99')
+      .set('Authorization', `Bearer ${token1}`);
+    expect(res.statusCode).toBe(400);
+  });
   let token1, token2;
   beforeEach(async () => {
     // user1, user2登録＆トークン取得
