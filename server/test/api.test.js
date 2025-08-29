@@ -14,6 +14,58 @@ afterAll((done) => {
   server && server.close(done);
 });
 
+  const USERS_FILE = path.join(__dirname, '../users.json');
+
+  beforeEach(() => {
+    // tasks.json初期化
+    fs.writeFileSync(DATA_FILE, '[]');
+    // users.json初期化
+    fs.writeFileSync(USERS_FILE, '[]');
+  });
+
+  describe('Auth API', () => {
+    test('POST /api/register 新規登録成功', async () => {
+      const res = await request(server)
+        .post('/api/register')
+        .send({ username: 'user1', password: 'pass1' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.token).toBeDefined();
+    });
+
+    test('POST /api/register 重複ユーザーはエラー', async () => {
+      await request(server)
+        .post('/api/register')
+        .send({ username: 'user1', password: 'pass1' });
+      const res = await request(server)
+        .post('/api/register')
+        .send({ username: 'user1', password: 'pass1' });
+    expect(res.statusCode).toBe(400);
+      expect(res.body.error).toBeDefined();
+    });
+
+    test('POST /api/login ログイン成功', async () => {
+      await request(server)
+        .post('/api/register')
+        .send({ username: 'user2', password: 'pass2' });
+      const res = await request(server)
+        .post('/api/login')
+        .send({ username: 'user2', password: 'pass2' });
+      expect(res.statusCode).toBe(200);
+      expect(res.body.token).toBeDefined();
+    });
+
+    test('POST /api/login パスワード不一致はエラー', async () => {
+      await request(server)
+        .post('/api/register')
+        .send({ username: 'user3', password: 'pass3' });
+      const res = await request(server)
+        .post('/api/login')
+        .send({ username: 'user3', password: 'wrong' });
+    expect(res.statusCode).toBe(401);
+      expect(res.body.error).toBeDefined();
+    });
+  });
+
 beforeEach(() => {
   // テスト前にtasks.jsonを初期化
   fs.writeFileSync(DATA_FILE, '[]');

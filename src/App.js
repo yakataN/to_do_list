@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Login from "./Login";
 // APIサーバーとの通信に使う
 const API_URL = "http://localhost:4000/api/tasks";
 
@@ -8,25 +9,40 @@ function App() {
   const [tasks, setTasks] = useState([]);
   // 入力欄の状態
   const [input, setInput] = useState("");
+  // ログイン状態
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
+
+  // 認証付きfetch
+  const authFetch = (url, options = {}) => {
+    const token = localStorage.getItem("token");
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        Authorization: token ? `Bearer ${token}` : undefined,
+      },
+    });
+  };
 
   // 初回取得
   React.useEffect(() => {
-    fetch(API_URL)
+    if (!loggedIn) return;
+    authFetch(API_URL)
       .then(res => res.json())
       .then(data => setTasks(data));
-  }, []);
+  }, [loggedIn]);
 
   // タスク追加
   const addTask = async () => {
     if (input.trim() === "") return;
     const newTask = { text: input, done: false };
-    await fetch(API_URL, {
+    await authFetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newTask)
     });
     // 再取得
-    fetch(API_URL)
+    authFetch(API_URL)
       .then(res => res.json())
       .then(data => setTasks(data));
     setInput("");
@@ -34,8 +50,8 @@ function App() {
 
   // タスク削除
   const deleteTask = async (index) => {
-    await fetch(`${API_URL}/${index}`, { method: "DELETE" });
-    fetch(API_URL)
+    await authFetch(`${API_URL}/${index}`, { method: "DELETE" });
+    authFetch(API_URL)
       .then(res => res.json())
       .then(data => setTasks(data));
   };
@@ -43,15 +59,19 @@ function App() {
   // 完了状態の切り替え
   const toggleDone = async (index) => {
     const updated = { ...tasks[index], done: !tasks[index].done };
-    await fetch(`${API_URL}/${index}`, {
+    await authFetch(`${API_URL}/${index}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated)
     });
-    fetch(API_URL)
+    authFetch(API_URL)
       .then(res => res.json())
       .then(data => setTasks(data));
   };
+
+  if (!loggedIn) {
+    return <Login onLogin={() => setLoggedIn(true)} />;
+  }
 
   return (
     <div style={{
