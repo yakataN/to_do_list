@@ -71,27 +71,36 @@ function auth(req, res, next) {
 }
 
 // タスク一覧取得
-app.get('/api/tasks', (req, res) => {
+app.get('/api/tasks', auth, (req, res) => {
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    if (err) return res.json([]);
-    try {
-      res.json(JSON.parse(data));
-    } catch {
-      res.json([]);
+    let allTasks = {};
+    if (!err && data) {
+      try {
+        allTasks = JSON.parse(data);
+        // 空配列の場合は空オブジェクトに変換
+        if (Array.isArray(allTasks)) allTasks = {};
+      } catch {}
     }
+    const username = req.user.username;
+    res.json(allTasks[username] || []);
   });
 });
 
 // タスク追加
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', auth, (req, res) => {
   const newTask = req.body;
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    let tasks = [];
+    let allTasks = {};
     if (!err && data) {
-      try { tasks = JSON.parse(data); } catch {}
+      try {
+        allTasks = JSON.parse(data);
+        if (Array.isArray(allTasks)) allTasks = {};
+      } catch {}
     }
-    tasks.push(newTask);
-    fs.writeFile(DATA_FILE, JSON.stringify(tasks, null, 2), err => {
+    const username = req.user.username;
+    if (!allTasks[username]) allTasks[username] = [];
+    allTasks[username].push(newTask);
+    fs.writeFile(DATA_FILE, JSON.stringify(allTasks, null, 2), err => {
       if (err) return res.status(500).send('保存失敗');
       res.json(newTask);
     });
@@ -99,16 +108,22 @@ app.post('/api/tasks', (req, res) => {
 });
 
 // タスク削除
-app.delete('/api/tasks/:index', (req, res) => {
+app.delete('/api/tasks/:index', auth, (req, res) => {
   const idx = parseInt(req.params.index, 10);
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    let tasks = [];
+    let allTasks = {};
     if (!err && data) {
-      try { tasks = JSON.parse(data); } catch {}
+      try {
+        allTasks = JSON.parse(data);
+        if (Array.isArray(allTasks)) allTasks = {};
+      } catch {}
     }
-    if (idx >= 0 && idx < tasks.length) {
-      tasks.splice(idx, 1);
-      fs.writeFile(DATA_FILE, JSON.stringify(tasks, null, 2), err => {
+    const username = req.user.username;
+    const userTasks = allTasks[username] || [];
+    if (idx >= 0 && idx < userTasks.length) {
+      userTasks.splice(idx, 1);
+      allTasks[username] = userTasks;
+      fs.writeFile(DATA_FILE, JSON.stringify(allTasks, null, 2), err => {
         if (err) return res.status(500).send('削除失敗');
         res.json({ success: true });
       });
@@ -119,17 +134,23 @@ app.delete('/api/tasks/:index', (req, res) => {
 });
 
 // タスク更新
-app.put('/api/tasks/:index', (req, res) => {
+app.put('/api/tasks/:index', auth, (req, res) => {
   const idx = parseInt(req.params.index, 10);
   const updatedTask = req.body;
   fs.readFile(DATA_FILE, 'utf8', (err, data) => {
-    let tasks = [];
+    let allTasks = {};
     if (!err && data) {
-      try { tasks = JSON.parse(data); } catch {}
+      try {
+        allTasks = JSON.parse(data);
+        if (Array.isArray(allTasks)) allTasks = {};
+      } catch {}
     }
-    if (idx >= 0 && idx < tasks.length) {
-      tasks[idx] = updatedTask;
-      fs.writeFile(DATA_FILE, JSON.stringify(tasks, null, 2), err => {
+    const username = req.user.username;
+    const userTasks = allTasks[username] || [];
+    if (idx >= 0 && idx < userTasks.length) {
+      userTasks[idx] = updatedTask;
+      allTasks[username] = userTasks;
+      fs.writeFile(DATA_FILE, JSON.stringify(allTasks, null, 2), err => {
         if (err) return res.status(500).send('更新失敗');
         res.json(updatedTask);
       });

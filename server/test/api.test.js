@@ -17,8 +17,8 @@ afterAll((done) => {
   const USERS_FILE = path.join(__dirname, '../users.json');
 
   beforeEach(() => {
-    // tasks.json初期化
-    fs.writeFileSync(DATA_FILE, '[]');
+  // tasks.json初期化（ユーザーごと管理用）
+  fs.writeFileSync(DATA_FILE, '{}');
     // users.json初期化
     fs.writeFileSync(USERS_FILE, '[]');
   });
@@ -72,39 +72,99 @@ beforeEach(() => {
 });
 
 describe('ToDo API', () => {
+  let token1, token2;
+  beforeEach(async () => {
+    // user1, user2登録＆トークン取得
+    const res1 = await request(server)
+      .post('/api/register')
+      .send({ username: 'user1', password: 'pass1' });
+    token1 = res1.body.token;
+    const res2 = await request(server)
+      .post('/api/register')
+      .send({ username: 'user2', password: 'pass2' });
+    token2 = res2.body.token;
+  });
+
   test('GET /api/tasks 初期は空配列', async () => {
-  const res = await request(server).get('/api/tasks');
+    const res = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`);
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual([]);
   });
 
   test('POST /api/tasks タスク追加', async () => {
     const newTask = { text: 'テスト', done: false };
-  const res = await request(server).post('/api/tasks').send(newTask);
+    const res = await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send(newTask);
     expect(res.statusCode).toBe(200);
     expect(res.body.text).toBe('テスト');
     // 追加後GETで確認
-  const getRes = await request(server).get('/api/tasks');
+    const getRes = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`);
     expect(getRes.body.length).toBe(1);
     expect(getRes.body[0].text).toBe('テスト');
   });
 
+  test('ユーザーごとにタスクが分離される', async () => {
+    // user1で追加
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'user1-task', done: false });
+    // user2で追加
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token2}`)
+      .send({ text: 'user2-task', done: false });
+    // user1で取得
+    const res1 = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`);
+    expect(res1.body.length).toBe(1);
+    expect(res1.body[0].text).toBe('user1-task');
+    // user2で取得
+    const res2 = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token2}`);
+    expect(res2.body.length).toBe(1);
+    expect(res2.body[0].text).toBe('user2-task');
+  });
+
   test('PUT /api/tasks/:index タスク更新', async () => {
-  await request(server).post('/api/tasks').send({ text: 'A', done: false });
-  const updated = { text: 'A', done: true };
-  const res = await request(server).put('/api/tasks/0').send(updated);
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'A', done: false });
+    const updated = { text: 'A', done: true };
+    const res = await request(server)
+      .put('/api/tasks/0')
+      .set('Authorization', `Bearer ${token1}`)
+      .send(updated);
     expect(res.statusCode).toBe(200);
     expect(res.body.done).toBe(true);
-  const getRes = await request(server).get('/api/tasks');
+    const getRes = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`);
     expect(getRes.body[0].done).toBe(true);
   });
 
   test('DELETE /api/tasks/:index タスク削除', async () => {
-  await request(server).post('/api/tasks').send({ text: 'A', done: false });
-  const res = await request(server).delete('/api/tasks/0');
+    await request(server)
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`)
+      .send({ text: 'A', done: false });
+    const res = await request(server)
+      .delete('/api/tasks/0')
+      .set('Authorization', `Bearer ${token1}`);
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-  const getRes = await request(server).get('/api/tasks');
+    const getRes = await request(server)
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${token1}`);
     expect(getRes.body.length).toBe(0);
   });
 });

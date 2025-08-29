@@ -1,6 +1,10 @@
 [
   {
-    "username": "yakata",
-    "password": "$2b$10$/xo.XoBU8jkFodL6rt//PegKxo9uEevJkhsgqEbJz1E5B95zcRGdK"
+    "username": "user1",
+    "password": "$2b$10$W.HD9oQt8.OxWqAiGKva1O28s2q0nJu933lIyDc1JPEIr6aM0qige"
+  },
+  {
+    "username": "user2",
+    "password": "$2b$10$zNY3FsF/nibwLpQSKE/gV.JhVl3PN3dPH4/Im9SwoZSzxg/bZQdXu"
   }
 ]
