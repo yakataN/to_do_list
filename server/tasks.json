@@ -1,3 +1,22 @@
 {
-  "user1": []
+  "user1": [
+    {
+      "text": "...",
+      "done": false
+    },
+    {
+      "text": "test",
+      "done": false
+    },
+    {
+      "text": "ij",
+      "done": false
+    }
+  ],
+  "user2": [
+    {
+      "text": "...",
+      "done": true
+    }
+  ]
 }
