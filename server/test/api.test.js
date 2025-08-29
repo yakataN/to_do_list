@@ -4,17 +4,36 @@ const path = require('path');
 let app;
 let server;
 
+const USERS_FILE = path.join(__dirname, '../users.json');
+const TASKS_FILE = path.join(__dirname, '../tasks.json');
+let usersBackup = null;
+let tasksBackup = null;
+
 const DATA_FILE = path.join(__dirname, '../tasks.json');
 
 beforeAll((done) => {
   app = require('../index');
   server = app.listen(4001, done); // テスト用ポート
+  // ファイルバックアップ
+  try {
+  const USERS_FILE = path.join(__dirname, '../users.json'); // 変数宣言を1箇所に統一
+  } catch { usersBackup = null; }
+  try {
+    tasksBackup = fs.readFileSync(TASKS_FILE, 'utf8');
+  } catch { tasksBackup = null; }
 });
 afterAll((done) => {
   server && server.close(done);
+  // ファイルリストア
+  if (usersBackup !== null) {
+    fs.writeFileSync(USERS_FILE, usersBackup);
+  }
+  if (tasksBackup !== null) {
+    fs.writeFileSync(TASKS_FILE, tasksBackup);
+  }
+  done();
 });
 
-  const USERS_FILE = path.join(__dirname, '../users.json');
 
   beforeEach(() => {
   // tasks.json初期化（ユーザーごと管理用）
