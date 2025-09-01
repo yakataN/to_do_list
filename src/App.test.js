@@ -1,5 +1,10 @@
+beforeEach(() => {
+  global.fetch = jest.fn();
+  jest.resetAllMocks();
+});
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
+const API_URL = process.env.REACT_APP_API_URL;
 
 // テスト用のダミートークン
 const setLogin = () => localStorage.setItem('token', 'dummy');
@@ -13,12 +18,14 @@ test('初期表示で「ログイン」見出しが表示される', () => {
 
 test('ログイン後にToDoリスト画面が表示される', () => {
   setLogin();
+  global.fetch = jest.fn().mockResolvedValueOnce({ json: async () => [] }); // 初回取得
   render(<App />);
   expect(screen.getByRole('heading', { name: /ToDoリスト/ })).toBeInTheDocument();
 });
 
 test('タスク追加ボタンは入力が空だと追加されない', () => {
   setLogin();
+  global.fetch = jest.fn().mockResolvedValueOnce({ json: async () => [] }); // 初回取得
   render(<App />);
   const addButton = screen.getByText('追加');
   addButton.click();
@@ -39,4 +46,40 @@ test('タスク入力→追加でリストに表示される（APIモック）',
   fireEvent.click(addButton);
   // タスクが表示される
   expect(await screen.findByText('テスト')).toBeInTheDocument();
+});
+
+test('タスク削除ボタンでリストから消える（APIモック）', async () => {
+  setLogin();
+  // 初回取得→削除→再取得の順でfetchをモック
+  global.fetch
+    .mockResolvedValueOnce({ json: async () => [{ text: '削除テスト', done: false }] }) // 初回取得
+    .mockResolvedValueOnce({}) // 削除
+    .mockResolvedValueOnce({ json: async () => [] }); // 再取得
+  render(<App />);
+  expect(await screen.findByText('削除テスト')).toBeInTheDocument();
+  const deleteButton = screen.getByText('削除');
+  fireEvent.click(deleteButton);
+  // タスク消失をawaitで待つ
+  await screen.findByText('タスクはありません');
+  expect(screen.getByText('タスクはありません')).toBeInTheDocument();
+});
+
+test('タスク完了切り替えで見た目が変わる（APIモック）', async () => {
+  setLogin();
+  // 初回取得→完了切り替え→再取得の順でfetchをモック
+  global.fetch
+    .mockResolvedValueOnce({ json: async () => [{ text: '完了テスト', done: false }] }) // 初回取得
+    .mockResolvedValueOnce({}) // 完了切り替え
+    .mockResolvedValueOnce({ json: async () => [{ text: '完了テスト', done: true }] }); // 再取得
+  render(<App />);
+  const taskText = await screen.findByText('完了テスト');
+  fireEvent.click(taskText);
+  // 完了状態の画面更新をawaitで待つ
+  const updatedTask = await screen.findByText('完了テスト');
+  expect(updatedTask).toBeInTheDocument();
+  // 完了フラグがtrueになっているAPIモックが返却されていることを検証
+  expect(global.fetch.mock.calls[2][0]).toBe(API_URL); // 3回目のfetchは再取得
+  const lastResponse = await global.fetch.mock.results[2].value;
+  const data = await lastResponse.json();
+  expect(data[0].done).toBe(true);
 });
