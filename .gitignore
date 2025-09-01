@@ -1,3 +1,6 @@
+# バックエンドの永続化ファイルをGit管理対象外に
+server/tasks.json
+server/users.json
 # .envファイルをGit管理対象外に
 .env
 node_modules

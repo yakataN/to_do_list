@@ -1,10 +1,10 @@
 [
   {
     "username": "user1",
-    "password": "$2b$10$19KJKZO4nqrmysecJ0UAheZ7YDEakoyZMT0psAWv2idSzVGcCpNAa"
+    "password": "$2b$10$f6SULYNkieQVHomygWanaO8LJdY8zSv8UgU08eT1Bg87hRipNHmke"
   },
   {
     "username": "user2",
-    "password": "$2b$10$/TBPixNY/lS1IrQpTLlEduc465Nj7OiKtLm4XON8U9LS2JAfiWdVG"
+    "password": "$2b$10$DzH6luXK/PjeypaWtoS1QOyAGkgD5jsZdwhlhORRFf5OnF7WB80Oi"
   }
 ]
