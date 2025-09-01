@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Login from "./Login";
 // APIサーバーとの通信に使う
 const API_URL = process.env.REACT_APP_API_URL;
+console.log("API_URL:", API_URL);
 
 // ToDoリストアプリのメインコンポーネント
 function App() {

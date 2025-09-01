@@ -1,1 +1,3 @@
+# .envファイルをGit管理対象外に
+.env
 node_modules

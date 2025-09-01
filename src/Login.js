@@ -6,13 +6,13 @@ function Login({ onLogin }) {
   const [error, setError] = useState("");
   const [isRegister, setIsRegister] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000/api/tasks";
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     const endpoint = isRegister ? "register" : "login";
-    // /api/tasks の部分を除去して /api/login, /api/register にする
-    const baseUrl = API_URL.replace(/\/api\/tasks$/, "");
+  // /api/tasks の部分を除去して /api/login, /api/register にする
+  const baseUrl = typeof API_URL === "string" ? API_URL.replace(/\/api\/tasks$/, "") : "http://localhost:4000";
     try {
       const res = await fetch(`${baseUrl}/api/${endpoint}`, {
         method: "POST",
