@@ -30,7 +30,7 @@ function App() {
     if (!loggedIn) return;
     authFetch(API_URL)
       .then(res => res.json())
-      .then(data => setTasks(data));
+      .then(data => setTasks(Array.isArray(data) ? data : []));
   }, [loggedIn]);
 
   // タスク追加
@@ -45,7 +45,7 @@ function App() {
     // 再取得
     authFetch(API_URL)
       .then(res => res.json())
-      .then(data => setTasks(data));
+      .then(data => setTasks(Array.isArray(data) ? data : []));
     setInput("");
   };
 
@@ -54,7 +54,7 @@ function App() {
     await authFetch(`${API_URL}/${index}`, { method: "DELETE" });
     authFetch(API_URL)
       .then(res => res.json())
-      .then(data => setTasks(data));
+      .then(data => setTasks(Array.isArray(data) ? data : []));
   };
 
   // 完了状態の切り替え
@@ -67,7 +67,7 @@ function App() {
     });
     authFetch(API_URL)
       .then(res => res.json())
-      .then(data => setTasks(data));
+      .then(data => setTasks(Array.isArray(data) ? data : []));
   };
 
   if (!loggedIn) {
